@@ -1,9 +1,8 @@
 # Legal Document Assistant — Telegram Bot
 
-A private Telegram bot that acts as a **legal document specialist**: describe a
-situation in plain language (by text, voice, or a photo of a document) and it
-drafts legally-structured paperwork as ready-to-sign PDFs, with citations to the
-relevant statutes.
+A private Telegram bot for drafting legal documents: describe a situation in
+plain language (by text, voice, or a photo of a document) and it prepares PDF
+drafts with suggested legal references for a person to verify.
 
 Built on **[aiogram 3](https://docs.aiogram.dev/)** (async), it combines a
 multi-provider LLM layer, on-device speech recognition, document-image OCR/vision,
