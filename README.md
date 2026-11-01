@@ -101,7 +101,7 @@ provider that errors is logged and skipped — the chain degrades gracefully.
 ### Encrypted vault design
 
 Each uploaded scan is encrypted with a single AES-256-GCM key (base64 in
-`VAULT_KEY`, generated on first run if absent). The ciphertext is `nonce || ct`,
+`VAULT_KEY`, supplied by the operator). The ciphertext is `nonce || ct`,
 with a fresh 12-byte nonce per file and the owner's `tg_id` bound as GCM
 associated data, so a file can only be decrypted in the context of its owner.
 Files live under per-user directories (`0700`) with `0600` permissions, indexed
@@ -136,14 +136,20 @@ pip install -r requirements.txt
 
 # 2. Configure
 cp .env.example .env
-#    Fill in BOT_TOKEN, OWNER_TG_ID, and at least one LLM provider key.
+#    Fill in BOT_TOKEN, OWNER_TG_ID, VAULT_KEY, and at least one LLM provider key.
+#    Generate VAULT_KEY once with: python -c 'import base64,secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())'
+#    Keep .env private: chmod 600 .env
 
 # 3. Run
 python main.py
 ```
 
-On first launch the SQLite schema is created automatically, and a `VAULT_KEY`
-is generated and appended to `.env` if one is not already set.
+On first launch the SQLite schema is created automatically. The application
+refuses to start without a valid `VAULT_KEY`; keep the same key across restarts
+or previously encrypted documents cannot be read.
+
+The vault-key checks run with `python -m unittest discover -s tests` after
+installing the dependencies.
 
 ---
 

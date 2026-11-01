@@ -1,8 +1,4 @@
-"""Шифрованное хранилище сканов. AES-256-GCM, ключ из .env (VAULT_KEY, base64 32 байта).
-
-Только владелец (tg_id) может читать свои файлы. При отсутствии ключа — генерируется
-и дописывается в .env при первом запуске.
-"""
+"""Шифрованное хранилище сканов. AES-256-GCM; VAULT_KEY обязателен."""
 import base64
 import hashlib
 import json
@@ -17,28 +13,20 @@ from config import DB_PATH, ROOT
 
 VAULT_ROOT = ROOT / "storage" / "vault"
 VAULT_ROOT.mkdir(parents=True, exist_ok=True)
-ENV_PATH = ROOT / ".env"
-
-
-def _load_or_create_key() -> bytes:
+def _load_key() -> bytes:
     key_b64 = os.environ.get("VAULT_KEY")
-    if key_b64:
-        return base64.b64decode(key_b64)
-    # генерируем и дописываем в .env
-    raw = AESGCM.generate_key(bit_length=256)
-    b64 = base64.b64encode(raw).decode()
-    os.environ["VAULT_KEY"] = b64
+    if not key_b64:
+        raise RuntimeError("VAULT_KEY is required; generate it once and keep it in a private .env file")
     try:
-        existing = ENV_PATH.read_text() if ENV_PATH.exists() else ""
-        if "VAULT_KEY=" not in existing:
-            with ENV_PATH.open("a") as f:
-                f.write(f"\nVAULT_KEY={b64}\n")
-    except Exception:
-        pass
-    return raw
+        key = base64.b64decode(key_b64, validate=True)
+    except (ValueError, base64.binascii.Error) as exc:
+        raise RuntimeError("VAULT_KEY must be base64-encoded") from exc
+    if len(key) != 32:
+        raise RuntimeError("VAULT_KEY must decode to 32 bytes")
+    return key
 
 
-_KEY = _load_or_create_key()
+_KEY = _load_key()
 _aes = AESGCM(_KEY)
 
 
